@@ -3,7 +3,7 @@
 **Autor:** Felipe Ramos Farías — Supervisor de TI, EIT Logística S.A.  
 **Fecha inicio:** 09-Nov-2026  
 **Última actualización:** 10-Nov-2026  
-**Estado general:** Fase 1 ✅ | Fase 2 ✅ | Fase 3 ⬜ Pendiente
+**Estado general:** Fase 1 ✅ | Fase 2 ✅ | Fase 2.5 ✅ | Fase 3 ⬜ Pendiente
 
 ---
 
@@ -110,6 +110,31 @@ La acción **"EITADMIN"** (única habilitada) solo dispara en severidades **High
 
 ---
 
+### Fase 2.5 — Triggers Custom (Métricas sin Trigger) ✅ COMPLETADA
+
+**Objetivo:** Crear triggers para las 10 métricas que se recolectan sin trigger asociado.  
+**Fecha ejecución:** 10-Nov-2026  
+**Host piloto:** EITAPP (10.200.42.20) — pasó de 76 a 86 triggers.  
+**Estado:** Completada — triggers creados, todos **DISABLED**.
+
+| # | Trigger | Umbral | Severity | Prioridad |
+|---|---------|--------|----------|-----------|
+| 1 | Memory pool non-paged | < 30MB | Warning | Alta |
+| 2 | Zabbix agent unreachable | nodata 3min | High | Alta |
+| 3 | Free swap space | < 500MB / < 200MB | Warning | Alta |
+| 4 | Memory page faults/sec | > 1,000 | Average | Media |
+| 5 | Number of processes | > 300 | Average | Media |
+| 6 | CPU DPC time | > 20% | Average | Media |
+| 7 | Number of threads | > 2,000 | Information | Baja |
+| 8 | CPU user time | > 80% | Information | Baja |
+| 9 | Context switches/sec | > 15,000 | Information | Baja |
+| 10 | Memory cache bytes | < 100MB | Information | Baja |
+
+**Pendiente:** Crear template custom para replicar a los 16 hosts restantes.  
+**Detalle completo:** [`docs/plan-fases/Triggers_Custom_EITAPP.md`](Triggers_Custom_EITAPP.md)
+
+---
+
 ### Fase 3 — Servicios Windows ⬜ PENDIENTE
 
 **Objetivo:** Revisar los ~50 servicios Windows por host y determinar cuáles son críticos para el negocio.  
@@ -165,8 +190,8 @@ Para activar las 7 acciones creadas, se requiere:
 
 ## 5. Oportunidades Futuras
 
-### A) Métricas sin triggers (~18 items)
-Items que se recopilan pero no tienen trigger de alerta configurado.
+### A) Métricas sin triggers (~18 items) — ✅ RESUELTO
+10 triggers custom creados en EITAPP (Fase 2.5). Pendiente replicar a los 16 hosts restantes via template custom.
 
 ### B) Nuevas áreas de monitoreo
 - Monitoreo de servicios Windows críticos (Fase 3)
@@ -197,3 +222,4 @@ Items que se recopilan pero no tienen trigger de alerta configurado.
 |-------|------|-------------|
 | 09-Nov-2026 | Fase 1 | Creadas 5 acciones (IDs 8-12) + "Alerta Swap Alto" — todas deshabilitadas |
 | 10-Nov-2026 | Fase 2 | Creada "Alerta CPU Alto", revisadas acciones de Disco y Swap — confirmadas correctas |
+| 10-Nov-2026 | Fase 2.5 | 10 triggers custom creados en EITAPP (76→86 triggers) — todos disabled |
