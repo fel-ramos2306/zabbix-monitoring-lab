@@ -1,6 +1,6 @@
-# Implementación de Zabbix — EIT Logística S.A.
+# Implementación de Zabbix 
 
-Proyecto de implementación y mejora continua de la plataforma de monitoreo Zabbix para la infraestructura de EIT Logística.
+Proyecto de implementación y mejora continua de la plataforma de monitoreo Zabbix para la infraestructura.
 
 ## Entorno
 
