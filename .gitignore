@@ -1,0 +1,27 @@
+# Credenciales y variables de entorno
+.env
+*.key
+*.pem
+*.crt
+
+# Archivos del sistema
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Archivos temporales
+*.tmp
+*.bak
+*.log
+
+# Datos sensibles de Zabbix
+zabbix_server.conf
+zabbix_agentd.conf
+*password*
+*secret*
