@@ -1,0 +1,160 @@
+zabbix_export:
+  version: '8.0'
+  template_groups:
+    - uuid: 7df96b18c230490a9a0a9e2307226338
+      name: Templates
+  templates:
+    - uuid: a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6
+      template: 'EIT Monitoreo Personalizado'
+      name: 'EIT Monitoreo Personalizado'
+      description: 'Template personalizado EIT - Monitoreo ICMP, Event Log Windows, Servicios Web'
+      groups:
+        - name: Templates
+      items:
+        - uuid: 11111111111111111111111111111001
+          name: 'ICMP ping'
+          type: SIMPLE
+          key: icmpping
+          delay: '60'
+          value_type: UNSIGNED
+          description: 'Verifica si el host responde a ICMP ping (1=OK, 0=Fallo)'
+          tags:
+            - tag: component
+              value: network
+        - uuid: 11111111111111111111111111111002
+          name: 'ICMP packet loss'
+          type: SIMPLE
+          key: icmppingloss
+          delay: '60'
+          value_type: FLOAT
+          units: '%'
+          description: 'Porcentaje de paquetes ICMP perdidos'
+          tags:
+            - tag: component
+              value: network
+        - uuid: 11111111111111111111111111111003
+          name: 'ICMP response time'
+          type: SIMPLE
+          key: icmppingsec
+          delay: '60'
+          value_type: FLOAT
+          units: s
+          description: 'Tiempo de respuesta ICMP en segundos'
+          tags:
+            - tag: component
+              value: network
+        - uuid: 11111111111111111111111111111004
+          name: 'Windows Event Log - System Errors'
+          type: ZABBIX_ACTIVE
+          key: 'eventlog[System,,,,,,^(Error)$]'
+          delay: '60'
+          value_type: LOG
+          description: 'Monitorea errores criticos en el Event Log de Sistema de Windows'
+          tags:
+            - tag: component
+              value: eventlog
+        - uuid: 11111111111111111111111111111005
+          name: 'Windows Event Log - Application Errors'
+          type: ZABBIX_ACTIVE
+          key: 'eventlog[Application,,,,,,^(Error)$]'
+          delay: '60'
+          value_type: LOG
+          description: 'Monitorea errores criticos en el Event Log de Aplicacion de Windows'
+          tags:
+            - tag: component
+              value: eventlog
+        - uuid: 11111111111111111111111111111006
+          name: 'Windows Service - Zabbix Agent status'
+          type: ZABBIX_ACTIVE
+          key: 'service.info[Zabbix Agent,state]'
+          delay: '60'
+          value_type: UNSIGNED
+          description: 'Estado del servicio Zabbix Agent en Windows'
+          tags:
+            - tag: component
+              value: services
+        - uuid: 11111111111111111111111111111007
+          name: 'Windows Service - Windows Update status'
+          type: ZABBIX_ACTIVE
+          key: 'service.info[wuauserv,state]'
+          delay: '300'
+          value_type: UNSIGNED
+          description: 'Estado del servicio Windows Update'
+          tags:
+            - tag: component
+              value: services
+        - uuid: 11111111111111111111111111111008
+          name: 'Windows Service - SQL Server status'
+          type: ZABBIX_ACTIVE
+          key: 'service.info[MSSQLSERVER,state]'
+          delay: '60'
+          value_type: UNSIGNED
+          description: 'Estado del servicio SQL Server (si existe)'
+          tags:
+            - tag: component
+              value: services
+            - tag: component
+              value: database
+        - uuid: 11111111111111111111111111111009
+          name: 'Backup folder last modification'
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.time[C:\Backup,modify]'
+          delay: '3600'
+          value_type: UNSIGNED
+          units: unixtime
+          description: 'Ultima modificacion del directorio de backups'
+          tags:
+            - tag: component
+              value: backup
+      triggers:
+        - uuid: 22222222222222222222222222222001
+          expression: 'max(/EIT Monitoreo Personalizado/icmpping,#3)=0'
+          name: 'Host {HOST.NAME} no responde a ICMP ping'
+          priority: HIGH
+          description: 'El host no ha respondido al ping ICMP en las ultimas 3 verificaciones'
+          tags:
+            - tag: scope
+              value: availability
+        - uuid: 22222222222222222222222222222002
+          expression: 'min(/EIT Monitoreo Personalizado/icmppingloss,5m)>20'
+          name: 'Perdida de paquetes ICMP alta en {HOST.NAME} (>{ITEM.LASTVALUE}%)'
+          priority: WARNING
+          description: 'Mas del 20% de paquetes ICMP perdidos en los ultimos 5 minutos'
+          tags:
+            - tag: scope
+              value: performance
+        - uuid: 22222222222222222222222222222003
+          expression: 'avg(/EIT Monitoreo Personalizado/icmppingsec,5m)>0.5'
+          name: 'Tiempo de respuesta ICMP alto en {HOST.NAME} (>{ITEM.LASTVALUE}s)'
+          priority: WARNING
+          description: 'Tiempo de respuesta ICMP promedio mayor a 500ms en los ultimos 5 minutos'
+          tags:
+            - tag: scope
+              value: performance
+        - uuid: 22222222222222222222222222222004
+          expression: 'nodata(/EIT Monitoreo Personalizado/eventlog[System,,,,,,^(Error)$],1800)=0 and length(last(/EIT Monitoreo Personalizado/eventlog[System,,,,,,^(Error)$]))>0'
+          name: 'Error critico en Event Log System de {HOST.NAME}'
+          priority: AVERAGE
+          description: 'Se detecto un error en el Event Log de Sistema de Windows'
+          manual_close: 'YES'
+          tags:
+            - tag: scope
+              value: notice
+        - uuid: 22222222222222222222222222222005
+          expression: 'nodata(/EIT Monitoreo Personalizado/eventlog[Application,,,,,,^(Error)$],1800)=0 and length(last(/EIT Monitoreo Personalizado/eventlog[Application,,,,,,^(Error)$]))>0'
+          name: 'Error critico en Event Log Application de {HOST.NAME}'
+          priority: AVERAGE
+          description: 'Se detecto un error en el Event Log de Aplicacion de Windows'
+          manual_close: 'YES'
+          tags:
+            - tag: scope
+              value: notice
+        - uuid: 22222222222222222222222222222006
+          expression: 'last(/EIT Monitoreo Personalizado/service.info[MSSQLSERVER,state])<>0 and last(/EIT Monitoreo Personalizado/service.info[MSSQLSERVER,state])<>255'
+          name: 'Servicio SQL Server detenido en {HOST.NAME}'
+          priority: HIGH
+          description: 'El servicio SQL Server no esta corriendo. Valor 0=running, 255=no existe'
+          manual_close: 'YES'
+          tags:
+            - tag: scope
+              value: availability
