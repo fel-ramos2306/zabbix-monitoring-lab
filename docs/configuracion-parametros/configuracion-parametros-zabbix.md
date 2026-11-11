@@ -25,9 +25,17 @@ El template estándar "Windows by Zabbix agent" no incluye monitoreo por proceso
 
 ---
 
-## 3. Estructura de archivos
+## 3. Creación de carpetas y estructura de archivos
 
-En cada servidor se creó la siguiente estructura:
+### 3.1. Crear la carpeta de scripts
+
+En cada servidor, abrir PowerShell como Administrador y ejecutar:
+
+```powershell
+New-Item -ItemType Directory -Path "C:\Zabbix\Scripts" -Force
+```
+
+### 3.2. Estructura resultante
 
 ```
 C:\Zabbix\Scripts\
@@ -35,6 +43,85 @@ C:\Zabbix\Scripts\
 ├── top_mem_processes.ps1      # Top 10 procesos por consumo de RAM
 ├── user_cpu_usage.ps1         # Consumo de CPU agrupado por usuario
 └── user_mem_usage.ps1         # Consumo de RAM agrupado por usuario
+```
+
+### 3.3. Crear cada script
+
+Ejecutar los siguientes comandos en PowerShell (como Administrador) para crear cada archivo:
+
+**top_cpu_processes.ps1:**
+```powershell
+@'
+Get-Process | Sort-Object CPU -Descending |
+  Select-Object -First 10 | ForEach-Object {
+    '{0}|CPU:{1:N1}|RAM:{2:N0}MB' -f
+      $_.ProcessName, $_.CPU, ($_.WorkingSet64/1MB)
+  } | Out-String
+'@ | Set-Content "C:\Zabbix\Scripts\top_cpu_processes.ps1" -Encoding ASCII
+```
+
+**top_mem_processes.ps1:**
+```powershell
+@'
+Get-Process | Sort-Object WorkingSet64 -Descending |
+  Select-Object -First 10 | ForEach-Object {
+    '{0}|RAM:{1:N0}MB|PID:{2}' -f
+      $_.ProcessName, ($_.WorkingSet64/1MB), $_.Id
+  } | Out-String
+'@ | Set-Content "C:\Zabbix\Scripts\top_mem_processes.ps1" -Encoding ASCII
+```
+
+**user_cpu_usage.ps1:**
+```powershell
+@'
+$data = Get-Process -IncludeUserName -ErrorAction SilentlyContinue |
+  Where-Object { $_.UserName } |
+  Group-Object UserName | ForEach-Object {
+    [PSCustomObject]@{
+      User = $_.Name
+      CPU  = ($_.Group | Measure-Object CPU -Sum).Sum
+      RAM  = ($_.Group | Measure-Object WorkingSet64 -Sum).Sum/1MB
+      Procs = $_.Count
+    }
+  } | Sort-Object CPU -Descending
+$data | ForEach-Object {
+    '{0}|CPU:{1:N1}|RAM:{2:N0}MB|Procs:{3}' -f
+      $_.User, $_.CPU, $_.RAM, $_.Procs
+  } | Out-String
+'@ | Set-Content "C:\Zabbix\Scripts\user_cpu_usage.ps1" -Encoding ASCII
+```
+
+**user_mem_usage.ps1:**
+```powershell
+@'
+$data = Get-Process -IncludeUserName -ErrorAction SilentlyContinue |
+  Where-Object { $_.UserName } |
+  Group-Object UserName | ForEach-Object {
+    [PSCustomObject]@{
+      User = $_.Name
+      RAM  = ($_.Group | Measure-Object WorkingSet64 -Sum).Sum/1MB
+      CPU  = ($_.Group | Measure-Object CPU -Sum).Sum
+      Procs = $_.Count
+    }
+  } | Sort-Object RAM -Descending
+$data | ForEach-Object {
+    '{0}|RAM:{1:N0}MB|CPU:{2:N1}|Procs:{3}' -f
+      $_.User, $_.RAM, $_.CPU, $_.Procs
+  } | Out-String
+'@ | Set-Content "C:\Zabbix\Scripts\user_mem_usage.ps1" -Encoding ASCII
+```
+
+### 3.4. Verificar que los scripts se crearon correctamente
+
+```powershell
+Get-ChildItem "C:\Zabbix\Scripts\*.ps1" | Select-Object Name, Length, LastWriteTime
+```
+
+### 3.5. Probar cada script manualmente
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File "C:\Zabbix\Scripts\top_cpu_processes.ps1"
+powershell -NoProfile -ExecutionPolicy Bypass -File "C:\Zabbix\Scripts\user_cpu_usage.ps1"
 ```
 
 ---
